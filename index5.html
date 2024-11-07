@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scrap Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        .form-section {
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            max-width: 500px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h1>SCRAP</h1>
+<div class="form-section">
+    <form id="scrapForm">
+        <label for="machine">Machine:</label>
+        <input type="text" id="machine" name="machine">
+
+        <label for="sparePart">Spare Part:</label>
+        <input type="text" id="sparePart" name="sparePart">
+
+        <label for="reason">Reason for Scrap:</label>
+        <input type="text" id="reason" name="reason">
+
+        <label for="approxValue">Approximate Value:</label>
+        <input type="number" id="approxValue" name="approxValue" step="0.01">
+
+        <label for="approvalBy">Approval By:</label>
+        <input type="text" id="approvalBy" name="approvalBy">
+
+        <button type="submit">Submit</button>
+        <button type="button" onclick="confirm('Are you sure you want to cancel?')">Cancel</button>
+    </form>
+</div>
+
+<h2>Stored Data</h2>
+<button id="exportButton">Export as Excel</button>
+<table id="dataTable">
+    <thead>
+    <tr>
+        <th>Machine</th>
+        <th>Spare Part</th>
+        <th>Reason for Scrap</th>
+        <th>Approximate Value</th>
+        <th>Approval By</th>
+    </tr>
+    </thead>
+    <tbody id="dataBody"></tbody>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("scrapForm");
+        const dataTableBody = document.getElementById("dataBody");
+        const exportButton = document.getElementById("exportButton");
+
+        let tableData = [];
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const machine = form.machine.value;
+            const sparePart = form.sparePart.value;
+            const reason = form.reason.value;
+            const approxValue = form.approxValue.value;
+            const approvalBy = form.approvalBy.value;
+
+            const rowData = [machine, sparePart, reason, approxValue, approvalBy];
+
+            const existingData = JSON.parse(localStorage.getItem("scrapData")) || [];
+            existingData.push(rowData);
+            localStorage.setItem("scrapData", JSON.stringify(existingData));
+
+            updateDataTable();
+
+            form.reset();
+        });
+
+        function updateDataTable() {
+            const storedData = JSON.parse(localStorage.getItem("scrapData")) || [];
+            tableData = storedData;
+            renderTable();
+        }
+
+        function renderTable() {
+            dataTableBody.innerHTML = "";
+            tableData.forEach(rowData => {
+                const row = document.createElement("tr");
+                rowData.forEach(cellData => {
+                    const cell = document.createElement("td");
+                    cell.textContent = cellData;
+                    row.appendChild(cell);
+                });
+                dataTableBody.appendChild(row);
+            });
+        }
+
+        updateDataTable();
+
+        exportButton.addEventListener("click", function () {
+            if (tableData.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            const header = ["Machine", "Spare Part", "Reason for Scrap", "Approximate Value", "Approval By"];
+            const data = [header].concat(tableData);
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Scrap Data");
+
+            XLSX.writeFile(wb, "scrap_data.xlsx");
+        });
+    });
+</script>
+</body>
+</html>
+
+
